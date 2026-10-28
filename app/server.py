@@ -2,6 +2,7 @@
 from pathlib import Path
 from datetime import datetime, timezone
 import gzip
+import copy
 import hashlib
 import html
 import importlib.metadata
@@ -29,6 +30,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from core import ROOT, Volume, demo, load_volume, load_dicom, dicom_series, label_names, validate, analyse, same_grid, mesh, obj_bytes, nifti_bytes, compare
 from pipeline import inspect_dataset, model_info, executable, environment
 from analysis import analyse_case, pair_distance, surface_agreement
+import evidence as report_evidence
 import jobs
 
 STATIC = Path(__file__).parent / 'static'
@@ -97,6 +99,46 @@ def current_matches(data):
     if data.get('case_id')!=c['id'] or data.get('revision')!=c['revision']:
         raise ValueError('The active case changed. Refresh before applying this action.')
     return c
+
+
+def evidence_record(c):
+    if 'evidence_record' not in c:
+        path=CASES/c['id']/'evidence.json'
+        record=json.loads(path.read_text(encoding='utf-8')) if path.is_file() else None
+        if record is not None and (record.get('schema_version')!=1 or record.get('case_id')!=c['id']):
+            raise ValueError('Saved evidence does not match this case or schema.')
+        c['evidence_record']=record
+    return c['evidence_record']
+
+
+def update_evidence(data, action):
+    with LOCK:
+        c=current_matches(data)
+        previous=evidence_record(c)
+        if data.get('evidence_version')!=(previous or {}).get('version'):
+            raise ValueError('The evidence report changed in another view. Reload the checker.')
+        if action=='evidence-generate':
+            record=report_evidence.new_record(c,copy.deepcopy(previous))
+            detail={'action':'regenerate_measurement_draft','replaced_measurements':[f for f in (previous or {}).get('findings',[]) if f['kind']=='calculated_volume']}
+        else:
+            if previous is None:raise ValueError('Generate the measurement draft and checker first.')
+            record=copy.deepcopy(previous)
+            if action=='evidence-add':
+                finding=report_evidence.add_finding(c,record,data);detail={'action':'add_draft','finding':copy.deepcopy(finding)}
+            elif action=='evidence-review':
+                finding=report_evidence.review_finding(c,record,data);detail={'action':'record_review','finding_id':finding['id'],'review':copy.deepcopy(finding['review'])}
+            else:
+                finding=next((f for f in record['findings'] if f['id']==data.get('finding_id')),None)
+                if finding is None:raise ValueError('Finding no longer exists.')
+                record['findings'].remove(finding);detail={'action':'remove_finding','finding':copy.deepcopy(finding)}
+        record['version']=uuid.uuid4().hex
+        record['audit'].append({**detail,'at':now(),'case_revision':c['revision'],'version':record['version']})
+        if not c['id'].isalnum():raise ValueError('Invalid case identifier.')
+        folder=CASES/c['id'];folder.mkdir(parents=True,exist_ok=True)
+        target=folder/'evidence.json';temp=folder/'evidence.json.tmp'
+        temp.write_text(json.dumps(record,indent=2,allow_nan=False),encoding='utf-8');temp.replace(target)
+        c['evidence_record']=record
+        return report_evidence.check_record(c,record)
 
 
 def save_manifest(c):
@@ -185,11 +227,12 @@ def export_report(c):
             'source_geometry_ras_mm':b.affine.tolist(),'shape':list(b.data.shape),'voxel_volume_mm3':b.voxel_mm3,
             'volume_method':'N_label × abs(det(A)); A is the spatial affine in mm',
             'bounds_method':'Axis-aligned RAS bounds of complete labelled voxel cells; not anatomical tooth lengths',
-            'structures':public_case()['rows'],'annotations':c['annotations'],'notes':b.notes,
+            'structures':report_evidence.rows_for(c),'annotations':c['annotations'],'notes':b.notes,
             'limitations':'Input calibration and segmentation quality determine accuracy. No clinical validation.',
             'software':{k:importlib.metadata.version(k) for k in ('numpy','nibabel','SimpleITK','scikit-image')},
             'modified_mask':c['dirty'],'advanced_analysis':c.get('analysis'),'reference_evaluation':c.get('evaluation'),
-            'model_provenance':c['source'].get('provenance')}
+            'model_provenance':c['source'].get('provenance'),
+            'evidence_uncertainty':report_evidence.check_record(c,evidence_record(c))}
     if c['synthetic']:
         result['simulation_conditions']={'purpose':'Software illustration only; no patient anatomy or training evidence',
             'geometry':'10 ellipsoids, centres (56+36 cos(t), 28+34 sin(t), 36) voxels; t=linspace(0.18, pi-0.18, 10); radii (5.2,6,17) voxels',
@@ -207,6 +250,9 @@ async def home(request):
 
 async def api_get(request):
     action=request.path_params['action']
+    if action=='evidence':
+        c=get_current()
+        return JSONResponse(await run_in_threadpool(report_evidence.check_record,c,evidence_record(c)))
     if action=='case':
         return JSONResponse(await run_in_threadpool(public_case))
     if action=='jobs':
@@ -276,6 +322,10 @@ async def api_get(request):
 async def api_post(request):
     data=await request.json()
     action=request.path_params['action']
+    if action in ('evidence-generate','evidence-add','evidence-review','evidence-remove'):
+        if any(j['status'] in ('queued','running','cancelling') for j in jobs.JOBS.values()):
+            raise ValueError('Wait for the current image or analysis job before changing the evidence report.')
+        return JSONResponse(await run_in_threadpool(update_evidence,data,action))
     if action in ('edit','undo') and any(j['status'] in ('queued','running','cancelling') for j in jobs.JOBS.values()):
         raise ValueError('Wait for the current analysis or image job before modifying the mask.')
     if action=='analyse':
@@ -469,6 +519,8 @@ async def upload(request):
 
 
 def render_slice(params):
+    if 'case_id' in params or 'revision' in params:
+        current_matches(params)
     c=get_current();b=c['mask'] if c['mask'] is not None else c['scan']
     axis=int(params.get('axis',2))
     if axis not in (0,1,2):raise ValueError('Invalid slice plane.')
@@ -537,12 +589,15 @@ async def download(request):
             content=stream.getvalue();media='text/csv'
     elif kind=='report.json':
         content=json.dumps(export_report(c),indent=2);media='application/json'
+    elif kind=='evidence.json':
+        content=json.dumps(report_evidence.check_record(c,evidence_record(c)),indent=2);media='application/json'
     elif kind=='measurements.csv':
         if c['rows'] is None:raise ValueError('No mask measurements.')
         content=c['rows'].to_csv(index=False);media='text/csv'
     elif kind=='report.html':
         r=export_report(c)
         table=c['rows'].to_html(index=False,escape=True,float_format=lambda x:f'{x:.4g}') if c['rows'] is not None else '<p>No mask measurements.</p>'
+        table=report_evidence.html_section(r['evidence_uncertainty'])+table
         content='<!doctype html><meta charset="utf-8"><title>Dental research report</title><style>body{font:15px system-ui;color:#203343;margin:42px}table{font-size:11px;border-collapse:collapse}td,th{padding:6px;border:1px solid #dde4e9}pre{white-space:pre-wrap;font-size:12px}h1{color:#167d75}@media print{button{display:none}}</style><button onclick="window.print()">Print / save PDF</button><h1>'+html.escape(c['title'])+'</h1><p>'+html.escape(r['classification'])+' · Research use only</p>'+table+'<h2>Methods, provenance and limitations</h2><pre>'+html.escape(json.dumps({k:v for k,v in r.items() if k!='structures'},indent=2))+'</pre>'
         media='text/html'
     elif kind=='mask.nii.gz':

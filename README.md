@@ -103,6 +103,12 @@ Tests use synthetic fixtures, not clinical evidence. The optional model download
 - **Long-path extraction failure:** move a fresh source checkout to a shorter folder and rerun setup. Do not move a running app with open cases.
 - **Where are errors?** See the job log in **Models & jobs** and the local `work/` and `results/` folders.
 
+## Evidence & Uncertainty Checker
+
+In **Reports**, choose **Generate draft & check** to create measurement statements with source locations. Add individual claims from a draft report, inspect their source slices, and record visibility, anatomical grounding, image quality and segmentation/model support. Unresolved findings are flagged for specialist review. Changes are saved locally with review history; old assessments become stale after image or evidence changes. JSON and printable reports retain the flags.
+
+This stage uses deterministic checks and reviewer assessments. It does not yet run the supplied paper's fine-tuned VLM, automatically verify diagnoses or produce calibrated confidence scores. See the [checker guide and limitations](docs/EVIDENCE_CHECKER.md).
+
 ## Stop, storage and removal
 
 Run `Stop.cmd` to stop this app and its owned workers. On a manual terminal launch, use Ctrl+C. Source files are preserved; generated data lives under `data/`, `models/`, `results/` and `work/`. These paths and `.venv/` are ignored by Git. Keep the server on `127.0.0.1`; this prototype has no multi-user deployment/authentication system.
