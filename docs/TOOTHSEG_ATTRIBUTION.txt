@@ -1,0 +1,9 @@
+ToothSeg pretrained model checkpoints
+Creators: Isensee, Fabian, van Nistelrooij, Niels, Krämer, Lars, Vinayahalingam, Shankeeth
+Source: https://doi.org/10.5281/zenodo.14893540
+License: Creative Commons Attribution 4.0 International
+https://creativecommons.org/licenses/by/4.0/
+Upstream implementation: https://github.com/MIC-DKFZ/ToothSeg (Apache-2.0)
+Original archive and source/license retained under models/pretrained/ToothSeg.
+Integration changes: safe tensor loading, sequential local execution, streamed label resampling, app provenance and held-out evaluation. Weights unchanged.
+This is not a newly trained model from this app. No clinical validation.

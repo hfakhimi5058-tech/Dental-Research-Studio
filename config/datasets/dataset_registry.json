@@ -1,0 +1,328 @@
+{
+  "schema_version": 1,
+  "reviewed_on": "2026-10-26",
+  "scope": "Bounded primary-source inventory for local CBCT research. TF2 acquired and preparing; labelled STS 3D acquired and audited; no trained model or exhaustive coverage claim.",
+  "evidence_policy": "Counts are QUOTED from cited sources unless explicitly marked otherwise. Listing a licence is not a legal permission determination. Source files, labels, access, terms, checksums and patient grouping must be checked at ingestion.",
+  "datasets": [
+    {
+      "id": "toothfairy1",
+      "name": "ToothFairy",
+      "modality": "CBCT",
+      "source_urls": [
+        "https://ditto.ing.unimore.it/toothfairy/"
+      ],
+      "count_quoted": {
+        "dense_and_sparse_volumes": 153,
+        "sparse_only_volumes": 290
+      },
+      "labels": "Inferior alveolar canal; sparse annotations differ from dense voxel labels.",
+      "format": "NumPy; raw DICOM also advertised",
+      "access": "Registration required at Ditto; files advertised, not downloaded.",
+      "licence": "Not verified from accessed primary pages.",
+      "family": "maxillo_toothfairy",
+      "route": "Optional canal-specific task; use sparse-label-aware loss. Prefer newer labels for duplicate cases.",
+      "blockers": [
+        "Verify licence and downloaded metadata.",
+        "Overlaps ToothFairy2/3; do not count as independent patients.",
+        "Official private challenge test is not released."
+      ]
+    },
+    {
+      "id": "toothfairy2",
+      "name": "ToothFairy2",
+      "modality": "CBCT",
+      "source_urls": [
+        "https://ditto.ing.unimore.it/toothfairy2/",
+        "https://toothfairy2.grand-challenge.org/dataset/",
+        "https://github.com/AImageLab-zip/ToothFairy2-Benchmark/blob/main/dataset.json"
+      ],
+      "count_quoted": {
+        "set_P": 417,
+        "set_F": 63,
+        "public_training_volumes": 480,
+        "declared_classes": 42
+      },
+      "labels": "Jaws, bilateral inferior alveolar canals and maxillary sinuses, pharynx, bridges/crowns/implants, FDI teeth. Exact IDs come from dataset.json; placeholder NA IDs are not anatomy.",
+      "format": "Downloaded release: MHA. Metadata uses Background/channels_names aliases; local converter normalizes them and retains source IDs.",
+      "access": "Official archive acquired through the signed-in account; moved into isolated data folder.",
+      "licence": "CC BY-SA; benchmark dataset.json specifies CC-BY-SA 4.0.",
+      "family": "maxillo_toothfairy",
+      "route": "Primary multi-structure baseline or compatibility mapping from TF3.",
+      "blockers": [
+        "Data preparation and downstream training/evaluation are ongoing.",
+        "P/F identities overlap other ToothFairy releases; never split the same source identity across cohorts.",
+        "Source CRC, geometry, labels and checksums are checked case by case."
+      ]
+    },
+    {
+      "id": "toothfairy3",
+      "name": "ToothFairy3",
+      "modality": "CBCT",
+      "source_urls": [
+        "https://ditto.ing.unimore.it/toothfairy3/",
+        "https://toothfairy3.grand-challenge.org/dataset/"
+      ],
+      "count_quoted": {
+        "public_volumes": 532,
+        "set_P": 417,
+        "set_F": 63,
+        "set_S": 52,
+        "declared_classes": 77
+      },
+      "labels": "TF2 structures plus tooth-specific pulp cavities, bilateral incisive canals and lingual canal.",
+      "format": "NIfTI; source explicitly warns of RPI orientation.",
+      "access": "Ditto registration required; private challenge test unavailable.",
+      "licence": "CC-BY-NC-SA stated by official challenge dataset page; exact version not verified.",
+      "family": "maxillo_toothfairy",
+      "route": "Preferred broad research segmentation source if terms fit intended use.",
+      "blockers": [
+        "All P/F cases overlap TF2; do not concatenate releases as new patients.",
+        "Do not assume TF2 licence applies.",
+        "Pin authoritative dataset.json; older repository descriptions disagree with current class count.",
+        "Orientation/affine and label mapping required."
+      ]
+    },
+    {
+      "id": "toothfairy4",
+      "name": "ToothFairy4",
+      "modality": "CBCT plus Italian and English reports",
+      "source_urls": [
+        "https://ditto.ing.unimore.it/toothfairy4/"
+      ],
+      "count_quoted": {
+        "headline_cases": 625,
+        "table_P": 417,
+        "table_F": 63,
+        "table_S": 52,
+        "table_A": 100
+      },
+      "labels": "Clinical reports; no new segmentation-label package established.",
+      "format": "NIfTI CBCT plus report files",
+      "access": "Ditto registration required.",
+      "licence": "Not verified from accessed primary page.",
+      "family": "maxillo_toothfairy",
+      "route": "Separate future report-generation task; not automatic extra segmentation supervision.",
+      "blockers": [
+        "P/F/S reuse TF3 and may differ in orientation.",
+        "Source counts conflict: CALCULATED table total 417+63+52+100=632, versus headline 625. Reconcile manifest before reporting unique count.",
+        "English reports use LLM translation; do not treat as independent clinician annotations.",
+        "Licence unresolved."
+      ]
+    },
+    {
+      "id": "pulpy3d",
+      "name": "Pulpy3D",
+      "modality": "CBCT",
+      "source_urls": [
+        "https://ditto.ing.unimore.it/pulpy3d/"
+      ],
+      "count_quoted": {
+        "scans": 423,
+        "declared_classes": 19
+      },
+      "labels": "Semantic/instance pulp annotations and reused inferior alveolar nerve annotations; page's class-description wording refers to lower teeth/anomaly teeth, so exact target meaning needs dataset.json.",
+      "format": "NIfTI",
+      "access": "Ditto registration required.",
+      "licence": "Not verified from accessed primary page.",
+      "family": "maxillo_toothfairy",
+      "route": "Pulp/canal-specific task only after overlap and ontology reconciliation.",
+      "blockers": [
+        "Extends ToothFairy; overlapping cases cannot span train/test.",
+        "Potential duplication of newer TF3 pulp labels.",
+        "Verify label definitions and licence."
+      ]
+    },
+    {
+      "id": "ctooth",
+      "name": "CTooth / CTooth+",
+      "modality": "CBCT",
+      "source_urls": [
+        "https://github.com/liangjiubujiu/CTooth",
+        "https://raw.githubusercontent.com/liangjiubujiu/CTooth/main/Data_requistion.md"
+      ],
+      "count_quoted": {
+        "README_slices": 5803,
+        "README_annotated_slices": 4243
+      },
+      "labels": "Tooth-volume masks; exact instance/semantic schema depends on release.",
+      "format": "Release-dependent; not inspected",
+      "access": "Official repository redirects users to STS challenge; older institutional-email request route remains documented. No request sent.",
+      "licence": "Conflicting primary statements: README CC BY 4.0; requisition text restricts modification, redistribution and commercial use and says research only.",
+      "family": "ctooth_sts",
+      "route": "Treat as provenance ancestor of STS, not additional independent volume count.",
+      "blockers": [
+        "Resolve release-specific terms rather than assuming README licence supersedes requisition conditions.",
+        "Direct current standalone data access not established.",
+        "Deduplicate against STS releases."
+      ]
+    },
+    {
+      "id": "sts_tooth",
+      "name": "STS-Tooth / STS-3D-Tooth",
+      "modality": "CBCT and separate 2D panoramic images",
+      "source_urls": [
+        "https://zenodo.org/records/10597292",
+        "https://zenodo.org/api/records/10597292",
+        "https://www.nature.com/articles/s41597-024-04306-9",
+        "https://github.com/ricoleehduu/STS-Challenge"
+      ],
+      "count_quoted": {
+        "archive_display_GB": 31.8,
+        "source_reported_CBCT_images": 148400,
+        "source_reported_CBCT_masks": 8800
+      },
+      "labels": "Dental-region segmentation plus unlabelled CBCT; do not infer numbered-tooth classes.",
+      "format": "NIfTI; paired image/mask grids match in the acquired labelled cases. Measured header spacings differ between Integrity and ROI.",
+      "access": "Labelled 3D Integrity/ROI archive members downloaded with CRC verification; local header/label audit completed.",
+      "licence": "Zenodo record 10597292: CC BY 4.0.",
+      "family": "ctooth_sts",
+      "route": "Keep separate. Add only after label ontology, physical calibration and cross-crop patient grouping are resolved.",
+      "blockers": [
+        "Integrity masks are binary, while ROI masks contain IDs 1, 2 and sometimes 4; no authoritative meaning for every ROI ID has been established.",
+        "Integrity headers use 1 mm isotropic spacing; source calibration must be verified before physical measurements or joint resampling.",
+        "ROI/full-volume patient correspondence is not established.",
+        "Unlabelled and 2D files were not acquired: no compatible training objective is implemented."
+      ]
+    },
+    {
+      "id": "sts2024",
+      "name": "STS 2024, 3D CBCT track",
+      "modality": "CBCT; separate panoramic track",
+      "source_urls": [
+        "https://github.com/ricoleehduu/STS-Challenge-2024",
+        "https://raw.githubusercontent.com/ricoleehduu/STS-Challenge-2024/main/README.md",
+        "https://zenodo.org/records/17712688"
+      ],
+      "count_quoted": {
+        "target_permanent_teeth": 32
+      },
+      "labels": "Permanent-tooth instance segmentation/identification; verify FDI ID map from files.",
+      "format": "Inspected Zenodo payload: 2D JPG/JSON; advertised 3D payload not present in that record.",
+      "access": "The linked Zenodo archive was downloaded and checksum verified. It contains JPG images plus JSON annotations, not CBCT NIfTI volumes.",
+      "licence": "Zenodo record 17712688: CC BY 4.0. Applicable 3D release terms still need checking.",
+      "family": "ctooth_sts",
+      "route": "Candidate external tooth-specific training/evaluation cohort, subject to exact annotations.",
+      "blockers": [
+        "Do not treat the inspected 2D payload as 3D training data.",
+        "The repository alternative 3D links and their exact release need inspection.",
+        "Potential CTooth/STS family overlap remains."
+      ]
+    },
+    {
+      "id": "dentvoxel",
+      "name": "DentVoxel",
+      "modality": "CBCT",
+      "source_urls": [
+        "https://figshare.com/articles/dataset/DentVoxel_a_fully_annotated_dental_CBCT_dataset_with_38_instance_anatomical_structures/31239889",
+        "https://api.figshare.com/v2/articles/31239889"
+      ],
+      "count_quoted": {
+        "advertised_scans": 100,
+        "advertised_labels": 38
+      },
+      "labels": "Maxilla, mandible, bilateral sinuses and mandibular canals, FDI individual teeth.",
+      "format": "NIfTI advertised",
+      "access": "BLOCKED: current version 3 API has is_metadata_record=true and no files despite description advertising public data.",
+      "licence": "CC BY 4.0 on record.",
+      "family": "dentvoxel_unconfirmed",
+      "route": "Potential independent multi-structure cohort once actual source files exist and provenance is checked.",
+      "blockers": [
+        "No downloadable payload in inspected current record.",
+        "Do not assume independent patients without provenance.",
+        "Label boundary definitions differ from TF2/3 and require mapping."
+      ]
+    },
+    {
+      "id": "cbct_oralscan_289",
+      "name": "3D multimodal dental dataset based on CBCT and oral scan",
+      "modality": "Paired CBCT and intraoral surface scan",
+      "source_urls": [
+        "https://figshare.com/articles/dataset/_b_3D_multimodal_dental_dataset_based_on_CBCT_and_oral_scan_b_/26965903",
+        "https://api.figshare.com/v2/articles/26965903"
+      ],
+      "count_quoted": {
+        "paired_cases": 289
+      },
+      "labels": "Corresponding dense CBCT segmentation masks not established by inspected landing page.",
+      "format": "Volume .gz files paired with STL/PLY surfaces. No filename indicates a separate voxel segmentation mask.",
+      "access": "Figshare metadata and complete central directories of all listed archives inspected by bounded range reads; no image payload acquired.",
+      "licence": "CC BY 4.0.",
+      "family": "cbct_oralscan_289",
+      "route": "Registration or unlabelled CBCT pretraining; supervised segmentation only if valid labels are found.",
+      "blockers": [
+        "Archive manifests do not establish dense voxel reference masks.",
+        "Surface scans cannot be silently substituted for internal volumetric labels.",
+        "A separate unlabelled pretraining/registration objective would be needed."
+      ]
+    },
+    {
+      "id": "physionet_multimodal",
+      "name": "PhysioNet multimodal dental dataset v1.1.0",
+      "modality": "CBCT DICOM, panoramic and CBCT-derived periapical images",
+      "source_urls": [
+        "https://physionet.org/content/multimodal-dental-dataset/1.1.0/",
+        "https://physionet.org/content/multimodal-dental-dataset/view-license/1.1.0/"
+      ],
+      "count_quoted": {
+        "patients": 169,
+        "CBCT_files": 329
+      },
+      "labels": "Tooth localisation described; release includes implant-presence labels. Dense voxel masks not established.",
+      "format": "DICOM, TIFF and CSV",
+      "access": "Credentialing, CITI training, signed DUA and project review by contributor required.",
+      "licence": "PhysioNet Contributor Review Health Data License 1.5.0.",
+      "family": "physionet_multimodal",
+      "route": "Optional unlabelled/localisation research after access approval; not ready segmentation supervision.",
+      "blockers": [
+        "Do not download legacy v1.0.0: v1.1.0 removes cases without informed consent.",
+        "Group repeat visits and derived modalities by original patient.",
+        "Restricted data access must not be shared; no request submitted.",
+        "Local storage/security conditions must comply with approved access."
+      ]
+    }
+  ],
+  "model_resources": [
+    {
+      "id": "toothseg",
+      "name": "ToothSeg",
+      "source_urls": [
+        "https://github.com/MIC-DKFZ/ToothSeg",
+        "https://zenodo.org/records/14893540",
+        "https://zenodo.org/api/records/14893540",
+        "https://prittt.ing.unimore.it/media/publications/pdfs/2025JBHI.pdf"
+      ],
+      "kind": "Public code and pretrained weights, not a new public training dataset.",
+      "labels": "Numbered tooth instances.",
+      "training_provenance": "Public checkpoints trained on ToothFairy2. Paper states in-house 1,282-case data cannot be made public and must be requested.",
+      "licence": "Code Apache-2.0; Zenodo checkpoint metadata cc-by-4.0.",
+      "route": "Baseline inference or initialization only; do not evaluate on TF2 as unseen training-independent data.",
+      "download": "https://zenodo.org/records/14893540/files/ToothSeg.zip?download=1",
+      "status": "Not downloaded or validated."
+    },
+    {
+      "id": "dentalsegmentator",
+      "name": "DentalSegmentator",
+      "source_urls": [
+        "https://zenodo.org/records/10829675",
+        "https://zenodo.org/api/records/10829675",
+        "https://www.sciencedirect.com/science/article/pii/S0300571224002999"
+      ],
+      "kind": "Pretrained model, not an established open source training-scan archive.",
+      "labels": "Upper skull, mandible, upper teeth, lower teeth, mandibular canal.",
+      "licence": "Zenodo model metadata cc-by-4.0.",
+      "route": "Coarse anatomy baseline; does not provide individual FDI teeth or full TF2 ontology.",
+      "status": "Not downloaded or validated."
+    }
+  ],
+  "ingestion_gates": [
+    "Record exact downloaded version, source, licence and attribution.",
+    "Verify image-label alignment, voxel units, affine handedness/orientation and valid label IDs.",
+    "Deduplicate patient/scan families across releases before any split.",
+    "Keep all visits, crops, meshes, reports and translations of a patient in one split.",
+    "Reserve independent evaluation patients; do not train on every accessible case.",
+    "Treat unannotated structures as unknown, never silently background.",
+    "Use task-specific label maps; do not merge same integer IDs from different ontologies.",
+    "Record source-specific performance, not just aggregate metrics.",
+    "No clinical accuracy claim without appropriate expert reference evaluation."
+  ]
+}

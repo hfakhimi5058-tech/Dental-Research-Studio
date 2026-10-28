@@ -1,0 +1,5 @@
+-r requirements.txt
+torch==2.8.0
+torchvision==0.23.0
+nnunetv2==2.8.1
+acvl_utils==0.2.6

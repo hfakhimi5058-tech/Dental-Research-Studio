@@ -1,0 +1,14 @@
+{
+  "type": "toothseg_tf2_dual_branch",
+  "name": "MIC-DKFZ ToothSeg",
+  "source": "https://doi.org/10.5281/zenodo.14893540",
+  "code": "https://github.com/MIC-DKFZ/ToothSeg",
+  "model_license": "CC-BY-4.0",
+  "code_license": "Apache-2.0",
+  "fold": 5,
+  "checkpoint": "checkpoint_final.pth",
+  "scope": "32 permanent tooth IDs; no separate jaw, canal, sinus, implant or restoration labels. Tooth regions may include crowns.",
+  "postprocessing": "Official ToothFairy2 majority-label pipeline",
+  "evaluation": "work/evaluation/toothseg-pilot/manifest.json",
+  "clinical_validation": false
+}
