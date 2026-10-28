@@ -1,4 +1,4 @@
-param([switch]$AI, [switch]$DownloadModels, [string]$Python='py')
+param([Alias('AI')][switch]$Segmentation, [switch]$DownloadModels, [string]$Python='py')
 $ErrorActionPreference='Stop'
 Set-Location -LiteralPath $PSScriptRoot
 $setupWork=Join-Path $PSScriptRoot 'work'
@@ -22,10 +22,10 @@ if (-not (Test-Path -LiteralPath $setupPython)) {
 }
 Run-Checked $setupPython @('-m','pip','install','--upgrade','pip')
 Run-Checked $setupPython @('-m','pip','install','-r','requirements.txt')
-if ($AI -or $DownloadModels) {
+if ($Segmentation -or $DownloadModels) {
     Run-Checked $setupPython @('-m','pip','install','torch==2.8.0','torchvision==0.23.0','--index-url','https://download.pytorch.org/whl/cu128')
-    Run-Checked $setupPython @('-m','pip','install','-r','requirements-ai.txt')
-    Run-Checked $setupPython @('-c','import torch; print("CUDA available:", torch.cuda.is_available()); print("GPU:", torch.cuda.get_device_name() if torch.cuda.is_available() else "none - AI inference needs an NVIDIA CUDA GPU")')
+    Run-Checked $setupPython @('-m','pip','install','-r','requirements-segmentation.txt')
+    Run-Checked $setupPython @('-c','import torch; print("CUDA available:", torch.cuda.is_available()); print("GPU:", torch.cuda.get_device_name() if torch.cuda.is_available() else "none - segmentation inference needs an NVIDIA CUDA GPU")')
 }
 if ($DownloadModels) { Run-Checked $setupPython @('scripts/download_models.py') }
 Write-Host 'Setup complete. Run Start.cmd and open http://127.0.0.1:8517/.'

@@ -42,6 +42,10 @@ LOCK = threading.RLock()
 CURRENT = None
 
 
+def display_title(title):
+    return str(title).replace('actual ToothSeg AI prediction','ToothSeg segmentation').replace('AI prediction','model prediction')
+
+
 def now():
     return datetime.now(timezone.utc).isoformat()
 
@@ -83,7 +87,7 @@ def public_case():
     base=c['mask'] if c['mask'] is not None else c['scan']
     sample=(c['scan'].data if c['scan'] is not None else base.data)[::4,::4,::4]
     lo,hi=np.percentile(sample,[1,99])
-    return {'id':c['id'],'revision':c['revision'],'title':c['title'],'synthetic':c['synthetic'],
+    return {'id':c['id'],'revision':c['revision'],'title':display_title(c['title']),'synthetic':c['synthetic'],
             'shape':list(base.data.shape),'spacing':base.spacing.tolist(),'affine':base.affine.tolist(),
             'orientation':list(nib.aff2axcodes(base.affine)), 'voxel_mm3':base.voxel_mm3,
             'has_mask':c['mask'] is not None,'has_scan':c['scan'] is not None,
@@ -223,7 +227,7 @@ def perform_edit(data):
 
 def export_report(c):
     b=c['mask'] if c['mask'] is not None else c['scan']
-    result={'case':c['title'],'created':now(),'classification':'SIMULATED illustration' if c['synthetic'] else 'CALCULATED research measurements',
+    result={'case':display_title(c['title']),'created':now(),'classification':'SIMULATED illustration' if c['synthetic'] else 'CALCULATED research measurements',
             'source_geometry_ras_mm':b.affine.tolist(),'shape':list(b.data.shape),'voxel_volume_mm3':b.voxel_mm3,
             'volume_method':'N_label × abs(det(A)); A is the spatial affine in mm',
             'bounds_method':'Axis-aligned RAS bounds of complete labelled voxel cells; not anatomical tooth lengths',
@@ -261,7 +265,7 @@ async def api_get(request):
         rows=[]
         for path in CASES.glob('*/case.json'):
             try:
-                item=json.loads(path.read_text());rows.append({k:item[k] for k in ('id','title','created','synthetic')})
+                item=json.loads(path.read_text());item['title']=display_title(item['title']);rows.append({k:item[k] for k in ('id','title','created','synthetic')})
             except (ValueError,KeyError):
                 pass
         return JSONResponse(rows)
@@ -299,7 +303,7 @@ async def api_get(request):
         composite=ROOT/'models'/'toothseg'
         if (composite/'pipeline.json').is_file():
             dataset,folds=model_info(composite)
-            found.append({'path':str(composite),'name':'ToothSeg · dual-branch teeth AI · public pretrained',
+            found.append({'path':str(composite),'name':'ToothSeg · dual-branch tooth segmentation · public pretrained',
                           'folds':folds,'labels':dataset['labels'],'checkpoint':'checkpoint_final.pth',
                           'source':'https://doi.org/10.5281/zenodo.14893540','recommended':True})
         for p in (ROOT/'models').rglob('plans.json'):
@@ -358,7 +362,7 @@ async def api_post(request):
             try:
                 proc=psutil.Process(int(managed.read_text()))
                 if str(ROOT/'app'/'research_run.py') in proc.cmdline():
-                    raise ValueError('The managed research worker is active. Stop it before starting another AI job.')
+                    raise ValueError('The managed research worker is active. Stop it before starting another segmentation job.')
             except psutil.NoSuchProcess:pass
     if action=='stop-research':
         folder=ROOT/'work'/'training';folder.mkdir(parents=True,exist_ok=True)
@@ -489,7 +493,7 @@ async def api_post(request):
             result=json.loads((run/'result.json').read_text())
             m=load_volume(result['mask'],True)
             if not same_grid(m,c['scan']):raise ValueError('Prediction geometry mismatch.')
-            new=set_current(m,c['scan'],{v:k for k,v in dataset['labels'].items()},c['title']+' · AI prediction',source={'mask':result['mask'],'scan':str(scan_path),'provenance':result.get('provenance',{'model':data['model'],'checkpoint':config['checkpoint'],'folds':chosen,'clinical_validation':False})})
+            new=set_current(m,c['scan'],{v:k for k,v in dataset['labels'].items()},display_title(c['title'])+' · model prediction',source={'mask':result['mask'],'scan':str(scan_path),'provenance':result.get('provenance',{'model':data['model'],'checkpoint':config['checkpoint'],'folds':chosen,'clinical_validation':False})})
             lp=CASES/new['id'];lp.mkdir(parents=True,exist_ok=True)
             labels=lp/'labels.json';labels.write_text(json.dumps(get_current()['names']));get_current()['source']['labels']=str(labels)
             save_manifest(get_current())
@@ -598,7 +602,7 @@ async def download(request):
         r=export_report(c)
         table=c['rows'].to_html(index=False,escape=True,float_format=lambda x:f'{x:.4g}') if c['rows'] is not None else '<p>No mask measurements.</p>'
         table=report_evidence.html_section(r['evidence_uncertainty'])+table
-        content='<!doctype html><meta charset="utf-8"><title>Dental research report</title><style>body{font:15px system-ui;color:#203343;margin:42px}table{font-size:11px;border-collapse:collapse}td,th{padding:6px;border:1px solid #dde4e9}pre{white-space:pre-wrap;font-size:12px}h1{color:#167d75}@media print{button{display:none}}</style><button onclick="window.print()">Print / save PDF</button><h1>'+html.escape(c['title'])+'</h1><p>'+html.escape(r['classification'])+' · Research use only</p>'+table+'<h2>Methods, provenance and limitations</h2><pre>'+html.escape(json.dumps({k:v for k,v in r.items() if k!='structures'},indent=2))+'</pre>'
+        content='<!doctype html><meta charset="utf-8"><title>Dental research report</title><style>body{font:15px system-ui;color:#203343;margin:42px}table{font-size:11px;border-collapse:collapse}td,th{padding:6px;border:1px solid #dde4e9}pre{white-space:pre-wrap;font-size:12px}h1{color:#167d75}@media print{button{display:none}}</style><button onclick="window.print()">Print / save PDF</button><h1>'+html.escape(display_title(c['title']))+'</h1><p>'+html.escape(r['classification'])+' · Research use only</p>'+table+'<h2>Methods, provenance and limitations</h2><pre>'+html.escape(json.dumps({k:v for k,v in r.items() if k!='structures'},indent=2))+'</pre>'
         media='text/html'
     elif kind=='mask.nii.gz':
         if c['mask'] is None:raise ValueError('No mask.')

@@ -2,7 +2,7 @@
 
 A local research application for dental CBCT review, automated tooth segmentation, interactive 3D visualization and quantitative analysis.
 
-**Research prototype. Not clinically validated.** Automated masks and measurements require review. The working AI uses the public pretrained [MIC-DKFZ ToothSeg model](https://doi.org/10.5281/zenodo.14893540); training a separate model remains experimental.
+**Research prototype. Not clinically validated.** Automated masks and measurements require review. Segmentation uses the public pretrained [MIC-DKFZ ToothSeg model](https://doi.org/10.5281/zenodo.14893540); training a separate model remains experimental.
 
 ## What is included
 
@@ -29,18 +29,18 @@ The repository is private; cloning requires access to it. Alternatively use GitH
 
 Open **http://127.0.0.1:8517/**. Setup creates an isolated `.venv`; it does not install packages globally. Viewer/measurement mode does not require a GPU or trained model. If the `py` launcher is unavailable, run `Setup.ps1 -Python "C:\path\to\python.exe"` with a Python 3.12 interpreter.
 
-## Enable actual AI segmentation
+## Enable automated segmentation
 
-This optional setup downloads PyTorch/CUDA dependencies and the approximately 920 MB official model archive. It needs an NVIDIA GPU with a compatible driver. The inference code checks for at least 8 GiB free GPU memory and 3 GiB available RAM; larger scans may require more. CPU-only AI inference is not implemented in this configured pipeline.
+This optional setup downloads PyTorch/CUDA dependencies and the approximately 920 MB official model archive. It needs an NVIDIA GPU with a compatible driver. The inference code checks for at least 8 GiB free GPU memory and 3 GiB available RAM; larger scans may require more. CPU-only model inference is not implemented in this configured pipeline.
 
 ```powershell
-.\Setup.cmd -AI -DownloadModels
+.\Setup.cmd -Segmentation -DownloadModels
 ```
 
 Restart the app if it was open during installation. Then:
 
 1. Choose **Import images** and supply the raw scan. An existing segmentation mask is optional.
-2. Open **Models & jobs**, select **ToothSeg · dual-branch teeth AI**, and keep `checkpoint_final.pth`.
+2. Open **Models & jobs**, select **ToothSeg · dual-branch tooth segmentation**, and keep `checkpoint_final.pth`.
 3. Review the model source and label definitions, then choose **Run local segmentation**.
 4. Inspect the result in **Workspace**, calculate additional measurements in **Analysis**, and export from **Reports**.
 
@@ -60,11 +60,11 @@ mkdir -p work/temp work/pycache
 TMPDIR="$PWD/work/temp" PYTHONPYCACHEPREFIX="$PWD/work/pycache" python app/app.py
 ```
 
-For Linux with a compatible NVIDIA GPU, install the CUDA packages and `requirements-ai.txt`, then run the model downloader:
+For Linux with a compatible NVIDIA GPU, install the CUDA packages and `requirements-segmentation.txt`, then run the model downloader:
 
 ```bash
 python -m pip install torch==2.8.0 torchvision==0.23.0 --index-url https://download.pytorch.org/whl/cu128
-python -m pip install -r requirements-ai.txt
+python -m pip install -r requirements-segmentation.txt
 python scripts/download_models.py
 ```
 
@@ -72,7 +72,7 @@ python scripts/download_models.py
 
 Obtain datasets directly from their publishers and review their access and usage conditions. The [ToothFairy2 portal](https://ditto.ing.unimore.it/toothfairy2/) provides the source used by the managed training workflow. A dataset is not needed for viewer mode or for inference on your own authorized scan.
 
-For experimental training, place the official archive at `data/ToothFairy2_Dataset.zip`. With AI dependencies installed, run:
+For experimental training, place the official archive at `data/ToothFairy2_Dataset.zip`. With segmentation dependencies installed, run:
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File .\Start-Research.ps1 -Stage all -Minutes 120
@@ -97,7 +97,7 @@ Tests use synthetic fixtures, not clinical evidence. The optional model download
 
 - **Port 8517 is in use:** stop another running copy with its `Stop.cmd`, or close that copy. The launcher does not kill unrelated processes.
 - **Python not found:** install Python 3.12 or pass its path to `Setup.ps1 -Python ...`.
-- **No model listed:** finish `Setup.cmd -AI -DownloadModels`; a viewer-only installation intentionally has no weights.
+- **No model listed:** finish `Setup.cmd -Segmentation -DownloadModels`; a viewer-only installation intentionally has no weights.
 - **CUDA unavailable/out of memory:** check the NVIDIA driver and CUDA-enabled PyTorch installation; free GPU/RAM and retry the failed job once after resolving the cause.
 - **Dataset has no paired images:** point to an extracted dataset containing `dataset.json`, `imagesTr` and `labelsTr`, or use the managed archive workflow above.
 - **Long-path extraction failure:** move a fresh source checkout to a shorter folder and rerun setup. Do not move a running app with open cases.
