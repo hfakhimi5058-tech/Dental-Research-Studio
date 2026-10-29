@@ -8,6 +8,7 @@ A local research application for dental CBCT review, automated tooth segmentatio
 
 - NIfTI (`.nii`, `.nii.gz`), MHA and conventional multi-file DICOM import.
 - Linked slices, window/level, interactive 3D surfaces, rotation controls and label selection.
+- Individual-tooth controls and visual size cards with volume, voxel counts, physical bounds and CSV export.
 - Volumes, physical bounds, centroids, surfaces, component checks and reference-mask agreement.
 - Local tooth segmentation, saved cases, slice corrections, undo and NIfTI/OBJ/CSV/JSON/report exports.
 - Optional bounded, resumable nnU-Net training tools and a source-specific dataset registry.
@@ -28,6 +29,10 @@ cd Dental-Research-Studio
 The repository is private; cloning requires access to it. Alternatively use GitHub's **Code → Download ZIP**, extract it, then double-click `Setup.cmd` and `Start.cmd`.
 
 Open **http://127.0.0.1:8517/**. Setup creates an isolated `.venv`; it does not install packages globally. Viewer/measurement mode does not require a GPU or trained model. If the `py` launcher is unavailable, run `Setup.ps1 -Python "C:\path\to\python.exe"` with a Python 3.12 interpreter.
+
+For usage instructions, follow the [user guide](docs/HOW_TO_USE.md), or select **?** in the app for its quick guide. Import an unsegmented image in **Raw scan**, leaving **Existing segmentation mask** empty: segmentation creates labels and does not require them beforehand.
+
+In **Workspace**, choose a tooth to view it separately, use the arrows to move between labels, or select **Show all teeth**. The selected segment's measurements appear above the images. **Segment sizes** opens searchable visual cards with a CSV export. Processing progress is shown above the images and beneath the segmentation button; 3D surface preparation has its own count.
 
 ## Enable automated segmentation
 
