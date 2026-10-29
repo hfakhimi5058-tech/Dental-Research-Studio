@@ -10,6 +10,7 @@ import uuid
 import psutil
 from core import ROOT
 from pipeline import environment
+from job_progress import snapshot
 
 FOLDER = ROOT / 'work' / 'jobs'
 FOLDER.mkdir(parents=True, exist_ok=True)
@@ -66,7 +67,10 @@ def run_process(item, args, minutes=60):
     log = FOLDER / (item['id'] + '.log')
     item['log'] = str(log)
     with log.open('w', encoding='utf-8') as handle:
-        process = subprocess.Popen(args, env=environment(), cwd=ROOT, stdout=handle, stderr=subprocess.STDOUT,
+        env = environment()
+        env['DENTAL_JOB_PROGRESS'] = str(FOLDER / (item['id'] + '.progress.json'))
+        env['PYTHONUNBUFFERED'] = '1'
+        process = subprocess.Popen(args, env=env, cwd=ROOT, stdout=handle, stderr=subprocess.STDOUT,
                                    creationflags=getattr(subprocess,'CREATE_NO_WINDOW',0))
         item['pid'] = process.pid
         save(item)
@@ -99,6 +103,7 @@ def listing():
                 with Path(item['log']).open('rb') as f:
                     f.seek(max(0,Path(item['log']).stat().st_size-16000))
                     entry['tail']=f.read().decode('utf-8',errors='replace')
+            entry['progress'] = snapshot(item, ROOT)
             result.append(entry)
         return result[:40]
 

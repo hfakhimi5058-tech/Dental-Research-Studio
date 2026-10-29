@@ -193,6 +193,7 @@ def run_pipeline(source, run):
 
 def finalize(run, source, started=None):
     from core import load_volume, same_grid
+    write_json(run / 'status.json', {'stage': 'finalize', 'updated': time.time()})
     if started is None:
         started = json.loads((run / 'semantic.nii.json').read_text())['started']
     scan = load_volume(source)

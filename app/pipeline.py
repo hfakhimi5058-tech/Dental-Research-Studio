@@ -8,6 +8,7 @@ import sys
 import time
 import uuid
 from core import ROOT, load_volume, same_grid, nifti_bytes
+from job_progress import track_run
 
 
 def environment(training=False):
@@ -71,6 +72,7 @@ def predict(scan, model_folder, folds, checkpoint="checkpoint_final.pth"):
             raise ValueError('The audited ToothSeg pipeline uses fold 5 final checkpoints for both branches.')
         run = ROOT / 'results' / ('toothseg-' + uuid.uuid4().hex[:10])
         run.mkdir(parents=True)
+        track_run(run, 'toothseg')
         image = nib.Nifti1Image(scan.data, scan.affine)
         image.header.set_xyzt_units('mm')
         image.set_sform(scan.affine, code=1)
@@ -89,6 +91,7 @@ def predict(scan, model_folder, folds, checkpoint="checkpoint_final.pth"):
     inp, out = run / "input", run / "output"
     inp.mkdir(parents=True)
     out.mkdir()
+    track_run(run, 'nnunet')
     ending = dataset["file_ending"]
     if ending in (".nii", ".nii.gz"):
         import nibabel as nib

@@ -102,6 +102,7 @@ Tests use synthetic fixtures, not clinical evidence. The optional model download
 - **Dataset has no paired images:** point to an extracted dataset containing `dataset.json`, `imagesTr` and `labelsTr`, or use the managed archive workflow above.
 - **Long-path extraction failure:** move a fresh source checkout to a shorter folder and rerun setup. Do not move a running app with open cases.
 - **Where are errors?** See the job log in **Models & jobs** and the local `work/` and `results/` folders.
+- **Is segmentation still working?** The job card and floating status panel show the current stage, elapsed time, worker status and time since the last log update. When the model reports block counts, the progress bar shows the current prediction pass only. Stages without a counter remain indeterminate; a pass reaching 100% does not mean the whole job is finished. Expand **Live stage log** for details. Completed and failed outcomes remain visible, and refreshing the page reconnects to a running job.
 
 ## Evidence & Uncertainty Checker
 
