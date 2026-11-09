@@ -7,6 +7,7 @@ A local research application for dental CBCT review, automated tooth segmentatio
 ## What is included
 
 - NIfTI (`.nii`, `.nii.gz`), MHA and conventional multi-file DICOM import.
+- Dedicated [Pulpy3D annotation import](docs/PULPY3D.md), with pulp/nerve label encodings, individual structure views and measurements.
 - Linked slices, window/level, interactive 3D surfaces, rotation controls and label selection.
 - Individual-tooth controls and visual size cards with volume, voxel counts, physical bounds and CSV export.
 - Volumes, physical bounds, centroids, surfaces, component checks and reference-mask agreement.
@@ -14,6 +15,8 @@ A local research application for dental CBCT review, automated tooth segmentatio
 - Optional bounded, resumable nnU-Net training tools and a source-specific dataset registry.
 
 Scans, datasets, model weights, local environments, credentials and previous users' results are **not included**. A fresh installation starts with a clearly labelled synthetic geometry example.
+
+**The Datasets page is a research catalogue, not a list of trained capabilities.** Its top panel shows available tools and checks model files on the current computer. ToothSeg produces permanent-tooth labels only; Pulpy3D support imports existing pulp/nerve annotations and does not provide automatic pulp prediction. Downloading a dataset does not install or train a model.
 
 ## Quick start — Windows
 
@@ -32,7 +35,7 @@ Open **http://127.0.0.1:8517/**. Setup creates an isolated `.venv`; it does not 
 
 For usage instructions, follow the [user guide](docs/HOW_TO_USE.md), or select **?** in the app for its quick guide. Import an unsegmented image in **Raw scan**, leaving **Existing segmentation mask** empty: segmentation creates labels and does not require them beforehand.
 
-In **Workspace**, choose a tooth to view it separately, use the arrows to move between labels, or select **Show all teeth**. The selected segment's measurements appear above the images. **Segment sizes** opens searchable visual cards with a CSV export. Processing progress is shown above the images and beneath the segmentation button; 3D surface preparation has its own count.
+In **Workspace**, choose a tooth to view it separately, use the arrows to move between labels, or select **Show all structures**. The selected segment's measurements appear above the images. **Segment sizes** opens searchable visual cards with a CSV export. Processing progress is shown above the images and beneath the segmentation button; 3D surface preparation has its own count.
 
 ## Enable automated segmentation
 

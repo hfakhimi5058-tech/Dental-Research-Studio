@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "reviewed_on": "2026-10-26",
-  "scope": "Bounded primary-source inventory for local CBCT research. TF2 acquired and preparing; labelled STS 3D acquired and audited; no trained model or exhaustive coverage claim.",
+  "scope": "Research catalogue, not installed data, trained models or automatic prediction capabilities. See the current-machine capabilities panel.",
   "evidence_policy": "Counts are QUOTED from cited sources unless explicitly marked otherwise. Listing a licence is not a legal permission determination. Source files, labels, access, terms, checksums and patient grouping must be checked at ingestion.",
   "datasets": [
     {
@@ -44,7 +44,7 @@
       },
       "labels": "Jaws, bilateral inferior alveolar canals and maxillary sinuses, pharynx, bridges/crowns/implants, FDI teeth. Exact IDs come from dataset.json; placeholder NA IDs are not anatomy.",
       "format": "Downloaded release: MHA. Metadata uses Background/channels_names aliases; local converter normalizes them and retains source IDs.",
-      "access": "Official archive acquired through the signed-in account; moved into isolated data folder.",
+      "access": "Obtain the official archive through the publisher portal; registration and source terms apply. This catalogue does not check whether it is downloaded.",
       "licence": "CC BY-SA; benchmark dataset.json specifies CC-BY-SA 4.0.",
       "family": "maxillo_toothfairy",
       "route": "Primary multi-structure baseline or compatibility mapping from TF3.",
@@ -114,22 +114,25 @@
       "name": "Pulpy3D",
       "modality": "CBCT",
       "source_urls": [
-        "https://ditto.ing.unimore.it/pulpy3d/"
+        "https://ditto.ing.unimore.it/pulpy3d/",
+        "https://github.com/mahmoudgamal0/Pulpy3D",
+        "https://github.com/mahmoudgamal0/Pulpy3D/blob/main/dataloader/Transformation.py"
       ],
       "count_quoted": {
         "scans": 423,
         "declared_classes": 19
       },
-      "labels": "Semantic/instance pulp annotations and reused inferior alveolar nerve annotations; page's class-description wording refers to lower teeth/anomaly teeth, so exact target meaning needs dataset.json.",
+      "labels": "Pulp cavities and inferior alveolar nerve annotations. Original FDI IDs and compact training IDs are distinct; pulp cavities are not whole-tooth masks.",
       "format": "NIfTI",
       "access": "Ditto registration required.",
       "licence": "Not verified from accessed primary page.",
       "family": "maxillo_toothfairy",
-      "route": "Pulp/canal-specific task only after overlap and ontology reconciliation.",
+      "route": "Dedicated local annotation import, 3D structure review and measurements. Automatic pulp prediction and combined-dataset training are not implemented.",
       "blockers": [
-        "Extends ToothFairy; overlapping cases cannot span train/test.",
-        "Potential duplication of newer TF3 pulp labels.",
-        "Verify label definitions and licence."
+        "Review the exact release terms and annotation origin before use.",
+        "Select the matching variant and label encoding; no automatic ontology remapping.",
+        "Shares ToothFairy patients: prevent cross-source train/test leakage.",
+        "No integrated pretrained Pulpy3D prediction model; datasets are not weights."
       ]
     },
     {
@@ -173,7 +176,7 @@
       },
       "labels": "Dental-region segmentation plus unlabelled CBCT; do not infer numbered-tooth classes.",
       "format": "NIfTI; paired image/mask grids match in the acquired labelled cases. Measured header spacings differ between Integrity and ROI.",
-      "access": "Labelled 3D Integrity/ROI archive members downloaded with CRC verification; local header/label audit completed.",
+      "access": "Obtain the labelled archive from the cited publisher and inspect the exact release. Data is not bundled with this app.",
       "licence": "Zenodo record 10597292: CC BY 4.0.",
       "family": "ctooth_sts",
       "route": "Keep separate. Add only after label ontology, physical calibration and cross-crop patient grouping are resolved.",
@@ -198,7 +201,7 @@
       },
       "labels": "Permanent-tooth instance segmentation/identification; verify FDI ID map from files.",
       "format": "Inspected Zenodo payload: 2D JPG/JSON; advertised 3D payload not present in that record.",
-      "access": "The linked Zenodo archive was downloaded and checksum verified. It contains JPG images plus JSON annotations, not CBCT NIfTI volumes.",
+      "access": "Publisher downloads are release-specific. The linked challenge archive reviewed contains JPG and JSON, not CBCT volumes. Data is not bundled.",
       "licence": "Zenodo record 17712688: CC BY 4.0. Applicable 3D release terms still need checking.",
       "family": "ctooth_sts",
       "route": "Candidate external tooth-specific training/evaluation cohort, subject to exact annotations.",

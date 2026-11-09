@@ -32,6 +32,8 @@ from pipeline import inspect_dataset, model_info, executable, environment
 from analysis import analyse_case, pair_distance, surface_agreement
 import evidence as report_evidence
 import jobs
+import pulpy3d
+import capabilities
 
 STATIC = Path(__file__).parent / 'static'
 CASES = ROOT / 'data' / 'cases'
@@ -95,6 +97,7 @@ def public_case():
             'notes':base.notes,'window':[float(lo),float(max(hi,lo+1))],
             'dirty':c['dirty'],'undo_count':len(c['undo']),'annotations':c['annotations'],
             'analysis':c.get('analysis'),'has_reference':c.get('reference') is not None,'evaluation':c.get('evaluation'),
+            'dataset_import':c['source'].get('dataset_import'),
             'provenance':c['source'].get('provenance')}
 
 
@@ -159,7 +162,7 @@ def load_case(data, saved=None):
         s=load_dicom(data['dicom_folder'],data['series_id'])
     else:
         s=load_volume(data['scan'],False,data.get('assume_mm',False)) if data.get('scan') else None
-    names=label_names(data.get('labels'))
+    names=label_names(data.get('labels')) if data.get('labels') else {int(k):str(v) for k,v in data.get('label_definitions',{}).items()}
     result=set_current(m,s,names,(saved or {}).get('title') or data.get('title') or 'Imported research case',
                        ident=(saved or {}).get('id'),synthetic=(saved or {}).get('synthetic',False),source=dict(data))
     if saved:
@@ -235,6 +238,7 @@ def export_report(c):
             'limitations':'Input calibration and segmentation quality determine accuracy. No clinical validation.',
             'software':{k:importlib.metadata.version(k) for k in ('numpy','nibabel','SimpleITK','scikit-image')},
             'modified_mask':c['dirty'],'advanced_analysis':c.get('analysis'),'reference_evaluation':c.get('evaluation'),
+            'dataset_import':c['source'].get('dataset_import'),
             'model_provenance':c['source'].get('provenance'),
             'evidence_uncertainty':report_evidence.check_record(c,evidence_record(c))}
     if c['synthetic']:
@@ -291,30 +295,17 @@ async def api_get(request):
             except (OSError,ValueError):return None
         return JSONResponse({'free_ram_gib':round(psutil.virtual_memory().available/2**30,1),
             'runtime_ready':importlib.util.find_spec('torch') is not None and importlib.util.find_spec('nnunetv2') is not None,
-            'models':len({p.parent.parent for p in (ROOT/'models').rglob('checkpoint_*.pth')}),'workspace':str(ROOT),
+            'models':len(capabilities.discover_models(ROOT)[0]),'workspace':str(ROOT),
             'version':'0.3 research','dataset_archives':[{'name':p.name,'bytes':p.stat().st_size} for p in (ROOT/'data').glob('*.zip')],
             'acquisition':saved_status(ROOT/'data'/'acquisition.json'),
             'training':saved_status(ROOT/'work'/'training'/'status.json')})
     if action=='datasets':
         path=ROOT/'config'/'datasets'/'dataset_registry.json'
         return JSONResponse(json.loads(path.read_text(encoding='utf-8-sig')) if path.is_file() else {'datasets':[],'status':'Research in progress'})
+    if action=='capabilities':
+        return JSONResponse(await run_in_threadpool(capabilities.status,ROOT))
     if action=='models':
-        found=[]
-        composite=ROOT/'models'/'toothseg'
-        if (composite/'pipeline.json').is_file():
-            dataset,folds=model_info(composite)
-            found.append({'path':str(composite),'name':'ToothSeg · dual-branch tooth segmentation · public pretrained',
-                          'folds':folds,'labels':dataset['labels'],'checkpoint':'checkpoint_final.pth',
-                          'source':'https://doi.org/10.5281/zenodo.14893540','recommended':True})
-        for p in (ROOT/'models').rglob('plans.json'):
-            if p.is_relative_to(composite):continue
-            try:
-                dataset,folds=model_info(p.parent)
-                checkpoint=next((n for n in ('checkpoint_final.pth','checkpoint_best.pth','checkpoint_latest.pth') if all((p.parent/f'fold_{f}'/n).is_file() for f in folds)),None)
-                found.append({'path':str(p.parent),'name':p.parent.name,'folds':folds,'labels':dataset['labels'],'checkpoint':checkpoint})
-            except ValueError:
-                pass
-        return JSONResponse(found)
+        return JSONResponse((await run_in_threadpool(capabilities.discover_models,ROOT))[0])
     if action=='ai-evidence':
         path=ROOT/'results'/'toothseg-pilot'/'evaluation.json'
         if not path.is_file():return JSONResponse({'cases':[],'completed_cases':0})
@@ -392,6 +383,18 @@ async def api_post(request):
     if action=='demo':
         m,s,n=demo()
         return JSONResponse(await run_in_threadpool(set_current,m,s,n,'Geometry demonstration','demo',True))
+    if action=='pulpy-inspect':
+        return JSONResponse(await run_in_threadpool(pulpy3d.inspect_folder,data.get('folder','')))
+    if action=='pulpy-import':
+        if CURRENT is not None and CURRENT.get('dirty'):
+            raise ValueError('Save the current corrections before importing another case.')
+        def import_pulpy(item):
+            item['message']='Loading Pulpy3D annotation and checking its label encoding and physical grid';jobs.save(item)
+            mask,scan,names,source,title=pulpy3d.load_annotation(data)
+            result=set_current(mask,scan,names,title,source=source)
+            save_manifest(get_current())
+            return result
+        return JSONResponse({'job':jobs.submit('Import Pulpy3D annotation',import_pulpy)})
     if action=='import':
         return JSONResponse({'job':jobs.submit('Import and analyse case',lambda item:load_case(data))})
     if action=='series':

@@ -12,12 +12,20 @@ For installation and model setup, start with the [README](../README.md). Open th
 
 **A raw scan does not need labels beforehand. Segmentation creates the labels.** An empty 3D surface view before segmentation is expected; the source slices can still be reviewed.
 
+The sidebar search **filters existing structure names and IDs**; typing a command there does not run it. Use **Clear filter** if your search hides all structures. **Models & jobs** gives setup instructions when weights or the runtime are missing.
+
+## Datasets and pulp cavities
+
+**Datasets** separates current-machine capabilities from the research source catalogue. Listed anatomy describes the source dataset, not what an installed model predicts. ToothSeg predicts permanent teeth; its output has no separate pulp, nerve, jaw or sinus labels.
+
+For Pulpy3D, use **Import images → Pulpy3D → Inspect folder**, choose a patient and annotation variant, then review and confirm its label encoding. The [Pulpy3D guide](PULPY3D.md) explains original FDI IDs, compact training IDs, binary masks and custom metadata. Importing preserves the original mask and opens its structures for 3D review, measurements and export. Pulp segments are not whole-tooth segments. This feature does not run automatic pulp prediction or train on the dataset.
+
 ## View and measure individual teeth
 
-- Use the **Tooth** selector above the images to show a label separately. **Show only this tooth** isolates the current selection; the arrow buttons move to the previous or next available label. **Show all teeth** restores the complete prediction.
+- Use the **Structure** selector above the images to show a label separately. **Show only this structure** isolates the current selection; the arrow buttons move to the previous or next available label. **Show all structures** restores the complete prediction.
 - Drag inside the 3D view to rotate, or use its directional buttons. Use the panel's expand button for a larger view. Scroll a source slice to move through the scan.
 - The measurement strip shows the selected segment's **volume in mm³**, **labelled voxel count** and **bounds in mm**.
-- Open **Segment sizes** for visual cards for every label. Search by tooth name or label, sort by label or volume, and use **View this tooth separately** to inspect a card's segment. **Export sizes CSV** downloads the measurements.
+- Open **Segment sizes** for visual cards for every label. Search by tooth name or label, sort by label or volume, and use **View this structure separately** to inspect a card's segment. **Export sizes CSV** downloads the measurements.
 
 Volume is labelled voxel count multiplied by voxel volume from the image's spatial transform. Bounds are dimensions along R (right), A (anterior) and S (superior); they are **not anatomical tooth lengths**. Names and IDs identify labels when display colours repeat.
 

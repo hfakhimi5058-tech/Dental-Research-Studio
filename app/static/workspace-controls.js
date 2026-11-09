@@ -7,8 +7,8 @@ function syncToothControls() {
   select.innerHTML = rows.map(r => `<option value="${r.label_id}">${esc(r.structure)} · ${r.label_id}</option>`).join('');
   select.value = String(state.selected ?? '');
   for (const id of ['tooth-select','tooth-only','tooth-previous','tooth-next','teeth-all']) $(id).disabled = !rows.length;
-  $('tooth-view-status').textContent = !rows.length ? 'Run segmentation to create tooth labels.' :
-    state.visible.size === 1 ? 'Showing one predicted label' : `Showing ${state.visible.size} of ${rows.length} labels`;
+  $('tooth-view-status').textContent = !rows.length ? 'Import annotations or run tooth segmentation.' :
+    state.visible.size === 1 ? 'Showing one label' : `Showing ${state.visible.size} of ${rows.length} labels`;
   renderToothMeasurements();
 }
 
@@ -76,7 +76,7 @@ function renderSizeCards() {
   const query = $('segment-size-search').value.toLowerCase();
   let rows = (state.c?.rows || []).filter(r => `${r.structure} ${r.label_id}`.toLowerCase().includes(query));
   rows = [...rows].sort($('segment-size-sort').value === 'volume' ? (a,b) => b.volume_mm3-a.volume_mm3 : (a,b) => a.label_id-b.label_id);
-  $('segment-size-cards').innerHTML = rows.length ? rows.map(row => `<article class="segment-size-card"><div class="size-card-heading"><i class="swatch" style="background:${colours[row.label_id % colours.length]}"></i><span>Label ${row.label_id}</span></div><h3>${esc(row.structure)}</h3>${sizeFacts(row)}${sizeWarning(row)}<button class="secondary full" data-size-tooth="${row.label_id}">View this tooth separately</button></article>`).join('') : '<p>No matching segments.</p>';
+  $('segment-size-cards').innerHTML = rows.length ? rows.map(row => `<article class="segment-size-card"><div class="size-card-heading"><i class="swatch" style="background:${colours[row.label_id % colours.length]}"></i><span>Label ${row.label_id}</span></div><h3>${esc(row.structure)}</h3>${sizeFacts(row)}${sizeWarning(row)}<button class="secondary full" data-size-tooth="${row.label_id}">View this structure separately</button></article>`).join('') : '<p>No matching segments.</p>';
   $$('[data-size-tooth]').forEach(button => button.onclick = () => {$('segment-sizes-dialog').close(); showOneTooth(+button.dataset.sizeTooth);});
 }
 
